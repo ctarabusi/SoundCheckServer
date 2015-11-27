@@ -1,22 +1,19 @@
 package s2m.fourier;
 
-import org.apache.commons.math.complex.Complex;
-import org.apache.commons.math.transform.FastFourierTransformer;
-
 import javax.servlet.ServletException;
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.BufferedInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.ObjectOutputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.ShortBuffer;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
+import java.util.logging.Logger;
 
 public class SpectrogramServlet extends HttpServlet
 {
@@ -25,15 +22,17 @@ public class SpectrogramServlet extends HttpServlet
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException
     {
+        List<double[]> outputMatrixList = new ArrayList<double[]>();
 
-        BufferedInputStream in = null;
+        InputStream in = null;
 
         byte[] buffer = new byte[CHUNK_SIZE];
 
         try
         {
-            List<double[]> outputMatrixList = new ArrayList<double[]>();
-            in = new BufferedInputStream(req.getInputStream());
+            in = req.getInputStream();
+
+            List<Double> inputFFTList = new ArrayList<Double>();
 
             for (int length = 0; (length = in.read(buffer)) > 0; )
             {
@@ -42,36 +41,21 @@ public class SpectrogramServlet extends HttpServlet
                 short[] samplesArray = new short[shortBuffer.limit()];
                 shortBuffer.get(samplesArray);
 
-                List<Double> inputFFTList = new ArrayList<Double>();
                 for (short sample : samplesArray)
                 {
                     inputFFTList.add((double) sample);
                 }
-
-                double[] inputArray = ServletUtils.doubleArrayToPrimitve(inputFFTList);
-                double[] inputWithoutMeanFFT = ServletUtils.removeAverage(inputArray);
-                double[] inputFFT = ServletUtils.addZeroPaddingToPowerTwo(inputArray);
-                Complex[] outputFFT = new FastFourierTransformer().transform(inputFFT);
-
-                Complex[] complexArray = Arrays.copyOfRange(outputFFT, 0, outputFFT.length / 2);
-                double[] magnitudeArray = ServletUtils.getMagnitudeComponents(complexArray);
-                outputMatrixList.add(magnitudeArray);
             }
 
-            ServletOutputStream outputStream = resp.getOutputStream();
-            ObjectOutputStream objectOutputStream = new ObjectOutputStream(outputStream);
+            int rowsAvailable = inputFFTList.size() / CHUNK_SIZE;
 
-            double[][] outputMatrix = new double[outputMatrixList.size()][outputMatrixList.get(0).length];
-            int i = 0;
-            for (double[] row : outputMatrixList)
+            for (int i = 0; i < rowsAvailable; i++)
             {
-                outputMatrix[i] = row;
-                i++;
+                List<Double> chunkList = inputFFTList.subList(i * CHUNK_SIZE, i * CHUNK_SIZE + CHUNK_SIZE);
+                outputMatrixList.add(ServletUtils.calculateFFT(chunkList));
             }
-            objectOutputStream.writeObject(outputMatrix);
 
-            outputStream.flush();
-            outputStream.close();
+            Logger.getAnonymousLogger().severe("number of elements " + outputMatrixList.size() + " row " + outputMatrixList.get(0).length);
         }
         finally
         {
@@ -80,5 +64,26 @@ public class SpectrogramServlet extends HttpServlet
                 in.close();
             }
         }
+
+        buildResponse(resp, outputMatrixList);
+    }
+
+
+    private void buildResponse(HttpServletResponse resp, List<double[]> outputMatrixList) throws IOException
+    {
+        ServletOutputStream outputStream = resp.getOutputStream();
+        ObjectOutputStream objectOutputStream = new ObjectOutputStream(outputStream);
+
+        double[][] outputMatrix = new double[outputMatrixList.size()][outputMatrixList.get(0).length];
+        int i = 0;
+        for (double[] row : outputMatrixList)
+        {
+            outputMatrix[i] = row;
+            i++;
+        }
+        objectOutputStream.writeObject(outputMatrix);
+
+        outputStream.flush();
+        outputStream.close();
     }
 }

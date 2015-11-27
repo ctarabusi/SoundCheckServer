@@ -33,7 +33,7 @@ public class FFTServlet extends HttpServlet
         {
             in = new BufferedInputStream(req.getInputStream());
 
-            for (int length = 0; (length = in.read(buffer)) > 0; )
+            for (int length = 0; (length = in.read(buffer, 0, buffer.length)) > 0; )
             {
                 ShortBuffer shortBuffer = ByteBuffer.wrap(buffer, 0, length).order(ByteOrder.LITTLE_ENDIAN).asShortBuffer();
 

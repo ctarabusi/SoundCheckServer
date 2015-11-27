@@ -1,6 +1,7 @@
 package s2m.fourier;
 
 import org.apache.commons.math.complex.Complex;
+import org.apache.commons.math.transform.FastFourierTransformer;
 
 import java.util.Arrays;
 import java.util.List;
@@ -69,5 +70,16 @@ public class ServletUtils
             realComponents[i++] = c.abs();
         }
         return realComponents;
+    }
+
+    public static double[] calculateFFT(List<Double> inputFFTList)
+    {
+        double[] inputArray = doubleArrayToPrimitve(inputFFTList);
+        double[] inputWithoutMeanFFT = removeAverage(inputArray);
+        double[] inputFFT = addZeroPaddingToPowerTwo(inputWithoutMeanFFT);
+        Complex[] outputFFT = new FastFourierTransformer().transform(inputFFT);
+
+        Complex[] complexArray = Arrays.copyOfRange(outputFFT, 0, outputFFT.length / 2);
+        return ServletUtils.getMagnitudeComponents(complexArray);
     }
 }
