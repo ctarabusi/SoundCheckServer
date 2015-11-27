@@ -4,6 +4,10 @@
          xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_3_0.xsd"
          version="2.5">
 
+    <servlet>
+        <servlet-name>Spectrogram</servlet-name>
+        <servlet-class>s2m.fourier.SpectrogramServlet</servlet-class>
+    </servlet>
 
     <servlet>
         <servlet-name>FFT</servlet-name>
@@ -16,4 +20,8 @@
     </servlet-mapping>
 
 
+    <servlet-mapping>
+        <servlet-name>Spectrogram</servlet-name>
+        <url-pattern>/spectrogram</url-pattern>
+    </servlet-mapping>
 </web-app>

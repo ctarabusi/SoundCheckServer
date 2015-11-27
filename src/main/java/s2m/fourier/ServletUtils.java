@@ -1,6 +1,9 @@
 package s2m.fourier;
 
+import org.apache.commons.math.complex.Complex;
+
 import java.util.Arrays;
+import java.util.List;
 
 public class ServletUtils
 {
@@ -42,5 +45,29 @@ public class ServletUtils
             i++;
         }
         return sampleArrayWithoutAverage;
+    }
+
+    public static double[] doubleArrayToPrimitve(List<Double> inputFFTList)
+    {
+        double[] primitiveArray = new double[inputFFTList.size()];
+        int i = 0;
+
+        for (double d : inputFFTList)
+        {
+            primitiveArray[i++] = d;
+        }
+
+        return primitiveArray;
+    }
+
+    public static double[] getMagnitudeComponents(Complex[] complexArray)
+    {
+        double[] realComponents = new double[complexArray.length];
+        int i = 0;
+        for (Complex c : complexArray)
+        {
+            realComponents[i++] = c.abs();
+        }
+        return realComponents;
     }
 }

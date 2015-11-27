@@ -1,7 +1,6 @@
 package s2m.fourier;
 
 import org.apache.commons.math.complex.Complex;
-import org.apache.commons.math.transform.FastCosineTransformer;
 import org.apache.commons.math.transform.FastFourierTransformer;
 
 import javax.servlet.ServletException;
@@ -58,44 +57,22 @@ public class FFTServlet extends HttpServlet
         }
 
 
-        double[] inputArray = doubleArrayToPrimitve(inputFFTList);
+        double[] inputArray = ServletUtils.doubleArrayToPrimitve(inputFFTList);
         double[] inputWithoutMeanFFT = ServletUtils.removeAverage(inputArray);
         double[] inputFFT = ServletUtils.addZeroPaddingToPowerTwo(inputWithoutMeanFFT);
-        double[] outputFFT = new FastCosineTransformer().transform(inputFFT);
+        Complex[] outputFFT = new FastFourierTransformer().transform(inputFFT);
 
         ServletOutputStream outputStream = resp.getOutputStream();
         ObjectOutputStream objectOutputStream = new ObjectOutputStream(outputStream);
 
-        double[] magnitudeArray = Arrays.copyOfRange(outputFFT, 0, outputFFT.length / 2);
+        Complex[] complexArray = Arrays.copyOfRange(outputFFT, 0, outputFFT.length / 2);
+        double[] magnitudeArray = ServletUtils.getMagnitudeComponents(complexArray);
         objectOutputStream.writeObject(magnitudeArray);
 
         outputStream.flush();
         outputStream.close();
     }
 
-    private double[] getMagnitudeComponents(Complex[] complexArray)
-    {
-        double[] realComponents = new double[complexArray.length];
-        int i = 0;
-        for (Complex c : complexArray)
-        {
-            realComponents[i++] = c.abs();
-        }
-        return realComponents;
-    }
-
-    private double[] doubleArrayToPrimitve(List<Double> inputFFTList)
-    {
-        double[] primitiveArray = new double[inputFFTList.size()];
-        int i = 0;
-
-        for (double d : inputFFTList)
-        {
-            primitiveArray[i++] = d;
-        }
-
-        return primitiveArray;
-    }
 
 
     public static float hammingWindow(int length, int index)
