@@ -1,0 +1,22 @@
+group 's2m.fourier'
+version ''
+
+apply plugin: 'java'
+apply plugin: 'war'
+apply plugin: 'jetty'
+
+allprojects {
+    sourceCompatibility = 1.6
+    targetCompatibility = 1.6
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile 'javax.servlet:servlet-api:2.5'
+    compile 'org.apache.commons:commons-math:2.1'
+
+    testCompile "junit:junit-dep:4.11"
+}
