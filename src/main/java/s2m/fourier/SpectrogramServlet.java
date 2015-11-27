@@ -50,7 +50,7 @@ public class SpectrogramServlet extends HttpServlet
 
                 double[] inputArray = ServletUtils.doubleArrayToPrimitve(inputFFTList);
                 double[] inputWithoutMeanFFT = ServletUtils.removeAverage(inputArray);
-                double[] inputFFT = ServletUtils.addZeroPaddingToPowerTwo(inputWithoutMeanFFT);
+                double[] inputFFT = ServletUtils.addZeroPaddingToPowerTwo(inputArray);
                 Complex[] outputFFT = new FastFourierTransformer().transform(inputFFT);
 
                 Complex[] complexArray = Arrays.copyOfRange(outputFFT, 0, outputFFT.length / 2);
