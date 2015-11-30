@@ -82,7 +82,7 @@ public class CheckSound extends HttpServlet
     private long[] readRecordings(byte[] buffer) throws IOException
     {
         ServletContext context = getServletContext();
-        String fullPath = context.getRealPath("/WEB-INF/Recording.wav");
+        String fullPath = context.getRealPath(RecordingServlet.RECORDING_AUDIO_PATH);
 
         List<Double> recordingAudioFFTList = new ArrayList<Double>();
         List<double[]> inputMatrixList = new ArrayList<double[]>();
