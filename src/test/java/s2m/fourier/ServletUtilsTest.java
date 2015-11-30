@@ -1,6 +1,7 @@
 package s2m.fourier;
 
 import org.junit.Test;
+import s2m.fourier.utils.ServletUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -8,13 +9,13 @@ import java.util.List;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 
-public class FFTTest
+public class ServletUtilsTest
 {
     @Test
     public void fft()
     {
 
-        List<Double> list = new ArrayList<Double>();
+        List<Double> list = new ArrayList<>();
         list.add(11.0);
         list.add(-20.0);
         list.add(-15.0);

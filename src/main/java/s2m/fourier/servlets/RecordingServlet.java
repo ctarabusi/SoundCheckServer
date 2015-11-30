@@ -1,4 +1,4 @@
-package s2m.fourier;
+package s2m.fourier.servlets;
 
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
@@ -19,7 +19,6 @@ public class RecordingServlet extends HttpServlet
     {
         ServletContext context = getServletContext();
         String fullPath = context.getRealPath(RECORDING_AUDIO_PATH);
-
 
         InputStream is = req.getInputStream();
         FileOutputStream fileOutputStream = new FileOutputStream(new File(fullPath));

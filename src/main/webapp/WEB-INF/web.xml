@@ -7,22 +7,22 @@
 
     <servlet>
         <servlet-name>FFT</servlet-name>
-        <servlet-class>s2m.fourier.FFTServlet</servlet-class>
+        <servlet-class>s2m.fourier.servlets.FFTServlet</servlet-class>
     </servlet>
 
     <servlet>
         <servlet-name>Spectrogram</servlet-name>
-        <servlet-class>s2m.fourier.SpectrogramServlet</servlet-class>
+        <servlet-class>s2m.fourier.servlets.SpectrogramServlet</servlet-class>
     </servlet>
 
     <servlet>
         <servlet-name>Recording</servlet-name>
-        <servlet-class>s2m.fourier.RecordingServlet</servlet-class>
+        <servlet-class>s2m.fourier.servlets.RecordingServlet</servlet-class>
     </servlet>
 
     <servlet>
         <servlet-name>CheckSound</servlet-name>
-        <servlet-class>s2m.fourier.CheckSound</servlet-class>
+        <servlet-class>s2m.fourier.servlets.CompareSoundServlet</servlet-class>
     </servlet>
 
     <servlet-mapping>

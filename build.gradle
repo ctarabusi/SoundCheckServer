@@ -5,9 +5,9 @@ apply plugin: 'java'
 apply plugin: 'war'
 apply plugin: 'jetty'
 
-allprojects {
-    sourceCompatibility = 1.6
-    targetCompatibility = 1.6
+compileOptions {
+    sourceCompatibility JavaVersion.VERSION_1_8
+    targetCompatibility JavaVersion.VERSION_1_8
 }
 
 repositories {
@@ -22,7 +22,7 @@ dependencies {
     testCompile "junit:junit-dep:4.11"
 }
 
- task copyWar(type: Copy) {
+task copyWar(type: Copy) {
     dependsOn war
     from 'build/libs/fourier-transform.war'
     into container_webapp

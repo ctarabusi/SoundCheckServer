@@ -1,7 +1,8 @@
-package s2m.fourier;
+package s2m.fourier.servlets;
 
 import org.apache.commons.math.complex.Complex;
 import org.apache.commons.math.transform.FastFourierTransformer;
+import s2m.fourier.utils.ServletUtils;
 
 import javax.servlet.ServletException;
 import javax.servlet.ServletOutputStream;
@@ -28,7 +29,7 @@ public class FFTServlet extends HttpServlet
 
         byte[] buffer = new byte[10240];
 
-        List<Double> inputFFTList = new ArrayList<Double>();
+        List<Double> inputFFTList = new ArrayList<>();
         try
         {
             in = new BufferedInputStream(req.getInputStream());
@@ -72,8 +73,6 @@ public class FFTServlet extends HttpServlet
         outputStream.flush();
         outputStream.close();
     }
-
-
 
     public static float hammingWindow(int length, int index)
     {

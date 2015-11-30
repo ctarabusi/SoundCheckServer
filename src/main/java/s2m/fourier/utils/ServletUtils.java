@@ -1,4 +1,4 @@
-package s2m.fourier;
+package s2m.fourier.utils;
 
 import org.apache.commons.math.complex.Complex;
 import org.apache.commons.math.transform.FastFourierTransformer;

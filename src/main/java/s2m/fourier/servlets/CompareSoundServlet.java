@@ -1,4 +1,6 @@
-package s2m.fourier;
+package s2m.fourier.servlets;
+
+import s2m.fourier.utils.ServletUtils;
 
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
@@ -21,7 +23,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 
-public class CheckSound extends HttpServlet
+public class CompareSoundServlet extends HttpServlet
 {
     private static int CHUNK_SIZE = 4096;
 
@@ -35,7 +37,7 @@ public class CheckSound extends HttpServlet
         int rowsAvailable;
         int i;
 
-        List<double[]> outputMatrixList = new ArrayList<double[]>();
+        List<double[]> outputMatrixList = new ArrayList<>();
 
         InputStream in = null;
 
@@ -43,7 +45,7 @@ public class CheckSound extends HttpServlet
         {
             in = req.getInputStream();
 
-            List<Double> inputFFTList = new ArrayList<Double>();
+            List<Double> inputFFTList = new ArrayList<>();
 
             for (int length = 0; (length = in.read(buffer)) > 0; )
             {
@@ -84,8 +86,8 @@ public class CheckSound extends HttpServlet
         ServletContext context = getServletContext();
         String fullPath = context.getRealPath(RecordingServlet.RECORDING_AUDIO_PATH);
 
-        List<Double> recordingAudioFFTList = new ArrayList<Double>();
-        List<double[]> inputMatrixList = new ArrayList<double[]>();
+        List<Double> recordingAudioFFTList = new ArrayList<>();
+        List<double[]> inputMatrixList = new ArrayList<>();
 
         File recordingFile = new File(fullPath);
         FileInputStream fileInputStream = new FileInputStream(recordingFile);
@@ -155,7 +157,7 @@ public class CheckSound extends HttpServlet
         Logger.getAnonymousLogger().severe("posted hashArray " + Arrays.toString(hashArray));
         Logger.getAnonymousLogger().severe("recorderHashArray " + Arrays.toString(recorderHashArray));
 
-        Map<Long, List<Integer>> sparseLongArray = new HashMap<Long, List<Integer>>();
+        Map<Long, List<Integer>> sparseLongArray = new HashMap<>();
         int index = 0;
         for (long frequencyPattern : recorderHashArray)
         {
@@ -164,7 +166,7 @@ public class CheckSound extends HttpServlet
                 List<Integer> listPositionForFrequency = sparseLongArray.get(frequencyPattern);
                 if (listPositionForFrequency == null)
                 {
-                    listPositionForFrequency = new ArrayList<Integer>();
+                    listPositionForFrequency = new ArrayList<>();
                 }
                 listPositionForFrequency.add(index);
                 sparseLongArray.put(frequencyPattern, listPositionForFrequency);
@@ -175,7 +177,7 @@ public class CheckSound extends HttpServlet
         sb.append("sparseLongArray ").append(sparseLongArray);
         sb.append("\n");
 
-        List<Integer> positionFound = new ArrayList<Integer>();
+        List<Integer> positionFound = new ArrayList<>();
         for (long hash : hashArray)
         {
             List<Integer> currentPositions = sparseLongArray.get(hash);

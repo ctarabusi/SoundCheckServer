@@ -1,4 +1,6 @@
-package s2m.fourier;
+package s2m.fourier.servlets;
+
+import s2m.fourier.utils.ServletUtils;
 
 import javax.servlet.ServletException;
 import javax.servlet.ServletOutputStream;
@@ -12,9 +14,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.ShortBuffer;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.logging.Logger;
 
 public class SpectrogramServlet extends HttpServlet
 {
@@ -23,7 +23,7 @@ public class SpectrogramServlet extends HttpServlet
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException
     {
-        List<double[]> outputMatrixList = new ArrayList<double[]>();
+        List<double[]> outputMatrixList = new ArrayList<>();
 
         InputStream in = null;
 
