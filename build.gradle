@@ -17,6 +17,7 @@ repositories {
 dependencies {
     compile 'javax.servlet:servlet-api:2.5'
     compile 'org.apache.commons:commons-math:2.1'
+    compile 'com.google.guava:guava:18.0'
 
     testCompile "junit:junit-dep:4.11"
 }

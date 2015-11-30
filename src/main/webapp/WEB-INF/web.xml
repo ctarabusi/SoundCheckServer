@@ -4,14 +4,20 @@
          xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_3_0.xsd"
          version="2.5">
 
+
+    <servlet>
+        <servlet-name>FFT</servlet-name>
+        <servlet-class>s2m.fourier.FFTServlet</servlet-class>
+    </servlet>
+
     <servlet>
         <servlet-name>Spectrogram</servlet-name>
         <servlet-class>s2m.fourier.SpectrogramServlet</servlet-class>
     </servlet>
 
     <servlet>
-        <servlet-name>FFT</servlet-name>
-        <servlet-class>s2m.fourier.FFTServlet</servlet-class>
+        <servlet-name>CheckSound</servlet-name>
+        <servlet-class>s2m.fourier.CheckSound</servlet-class>
     </servlet>
 
     <servlet-mapping>
@@ -19,9 +25,13 @@
         <url-pattern>/fft</url-pattern>
     </servlet-mapping>
 
-
     <servlet-mapping>
         <servlet-name>Spectrogram</servlet-name>
         <url-pattern>/spectrogram</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>CheckSound</servlet-name>
+        <url-pattern>/checksound</url-pattern>
     </servlet-mapping>
 </web-app>

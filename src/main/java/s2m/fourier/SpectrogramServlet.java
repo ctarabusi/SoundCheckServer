@@ -12,6 +12,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.ShortBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -54,8 +55,6 @@ public class SpectrogramServlet extends HttpServlet
                 List<Double> chunkList = inputFFTList.subList(i * CHUNK_SIZE, i * CHUNK_SIZE + CHUNK_SIZE);
                 outputMatrixList.add(ServletUtils.calculateFFT(chunkList));
             }
-
-            Logger.getAnonymousLogger().severe("number of elements " + outputMatrixList.size() + " row " + outputMatrixList.get(0).length);
         }
         finally
         {
@@ -67,7 +66,6 @@ public class SpectrogramServlet extends HttpServlet
 
         buildResponse(resp, outputMatrixList);
     }
-
 
     private void buildResponse(HttpServletResponse resp, List<double[]> outputMatrixList) throws IOException
     {
@@ -81,6 +79,7 @@ public class SpectrogramServlet extends HttpServlet
             outputMatrix[i] = row;
             i++;
         }
+
         objectOutputStream.writeObject(outputMatrix);
 
         outputStream.flush();
