@@ -187,9 +187,6 @@ public class CompareSoundServlet extends HttpServlet
             }
         }
 
-        sb.append("positionsFound").append(positionFound);
-        sb.append("\n");
-
         int elementsInOrder = 0;
         int currentPosition = 0;
         for (Integer position : positionFound)
