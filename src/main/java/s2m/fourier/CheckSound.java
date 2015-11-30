@@ -138,15 +138,19 @@ public class CheckSound extends HttpServlet
 
         long[] hashArray = findFrequencyPeaks(outputMatrix);
 
-        findMatch(hashArray, recorderHashArray);
+        String output = findMatch(hashArray, recorderHashArray);
+        objectOutputStream.writeObject(output);
 
         outputStream.flush();
         outputStream.close();
     }
 
-    private void findMatch(long[] hashArray, long[] recorderHashArray)
+    private String findMatch(long[] hashArray, long[] recorderHashArray)
     {
-        Logger.getAnonymousLogger().severe("findMatch " + hashArray.length + " inputHashArray " + recorderHashArray.length);
+        StringBuilder sb = new StringBuilder();
+
+        sb.append("findMatch ").append(hashArray.length).append(" inputHashArray ").append(recorderHashArray.length);
+        sb.append("\n");
 
         Logger.getAnonymousLogger().severe("posted hashArray " + Arrays.toString(hashArray));
         Logger.getAnonymousLogger().severe("recorderHashArray " + Arrays.toString(recorderHashArray));
@@ -168,8 +172,8 @@ public class CheckSound extends HttpServlet
 
             index++;
         }
-        Logger.getAnonymousLogger().severe("sparseLongArray " + sparseLongArray);
-
+        sb.append("sparseLongArray ").append(sparseLongArray);
+        sb.append("\n");
 
         List<Integer> positionFound = new ArrayList<Integer>();
         for (long hash : hashArray)
@@ -181,7 +185,8 @@ public class CheckSound extends HttpServlet
             }
         }
 
-        Logger.getAnonymousLogger().severe("positionFound " + positionFound);
+        sb.append("positionsFound").append(positionFound);
+        sb.append("\n");
 
         int elementsInOrder = 0;
         int currentPosition = 0;
@@ -193,7 +198,10 @@ public class CheckSound extends HttpServlet
                 elementsInOrder++;
             }
         }
-        Logger.getAnonymousLogger().severe("elementsInOrder " + elementsInOrder);
+        sb.append("elementsInOrder ").append(elementsInOrder);
+        sb.append("\n");
+
+        return sb.toString();
     }
 
     private long[] findFrequencyPeaks(double[][] outputMatrix)
