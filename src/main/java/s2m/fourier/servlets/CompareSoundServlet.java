@@ -52,6 +52,8 @@ public class CompareSoundServlet extends HttpServlet
             foundMatching = getFrequencyPeaksFromInput(is, recordingFrequencyPeakHashes);
         }
 
+        Logger.getAnonymousLogger().severe("foundMatching " + foundMatching);
+
         buildResponse(resp, String.valueOf(foundMatching));
     }
 
@@ -213,19 +215,9 @@ public class CompareSoundServlet extends HttpServlet
         int currentIndex = 0;
         for (double[] instantFrequencies : outputMatrix)
         {
-            int size = instantFrequencies.length;
+            int firstMax = findFrequencyPositionWithMaxAmplitude(instantFrequencies, 0);
 
-            int sectionSize = size / 4;
-
-            int firstMax = findFrequencyPositionWithMaxAmplitude(Arrays.copyOfRange(instantFrequencies, 0, sectionSize), 0);
-            int secondMax = findFrequencyPositionWithMaxAmplitude(Arrays.copyOfRange(instantFrequencies, sectionSize, sectionSize * 2), sectionSize);
-            int thirdMax = findFrequencyPositionWithMaxAmplitude(Arrays.copyOfRange(instantFrequencies, sectionSize * 2, sectionSize * 3), sectionSize * 2);
-            int fourthMax = findFrequencyPositionWithMaxAmplitude(Arrays.copyOfRange(instantFrequencies, sectionSize * 3, size), sectionSize * 3);
-
-            addFrequency(map, firstMax, 4 * currentIndex);
-            addFrequency(map, secondMax, 4 * currentIndex + 1);
-            addFrequency(map, thirdMax, 4 * currentIndex + 2);
-            addFrequency(map, fourthMax, 4 * currentIndex + 3);
+            addFrequency(map, firstMax, currentIndex);
 
             currentIndex++;
         }
@@ -245,7 +237,6 @@ public class CompareSoundServlet extends HttpServlet
             List<Integer> freqBin = recordingMap.get(firstMax);
             if (freqBin != null && !previousFreqBin.isEmpty())
             {
-
                 for (Integer freqElement : freqBin)
                 {
                     for (Integer previousFreqElement : previousFreqBin)
@@ -275,19 +266,6 @@ public class CompareSoundServlet extends HttpServlet
         }
         listPositionForFrequency.add(position);
         map.put(frequency, listPositionForFrequency);
-    }
-
-
-    //Using a little bit of error-correction, damping
-    private static final int FUZ_FACTOR = 2;
-
-    private static long hash(int firstMax, int secondMax, int thirdMax, int fourthMax)
-    {
-        long p1 = firstMax;
-        long p2 = secondMax;
-        long p3 = thirdMax;
-        long p4 = fourthMax;
-        return (p4 - (p4 % FUZ_FACTOR)) * 100000000 + (p3 - (p3 % FUZ_FACTOR)) * 100000 + (p2 - (p2 % FUZ_FACTOR)) * 100 + (p1 - (p1 % FUZ_FACTOR));
     }
 
     public static int findFrequencyPositionWithMaxAmplitude(double[] array, int baseIndex)
