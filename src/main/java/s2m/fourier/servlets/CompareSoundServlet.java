@@ -25,71 +25,92 @@ import java.util.logging.Logger;
 
 public class CompareSoundServlet extends HttpServlet
 {
-    private static int CHUNK_SIZE = 2048;
+    private static int FREQUENCY_CHUNK_SIZE = 2048;
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException
     {
-        byte[] buffer = new byte[CHUNK_SIZE];
+        ServletContext context = getServletContext();
+        String fullPath = context.getRealPath(RecordingServlet.RECORDING_AUDIO_PATH);
+        File recordingFile = new File(fullPath);
 
-        long[] recorderHashArray = readRecordings(buffer);
+        Map<Integer, List<Integer>> recordingFrequencyPeakHashes;
+
+        try (FileInputStream fileInputStream = new FileInputStream(recordingFile))
+        {
+            recordingFrequencyPeakHashes = readFrequencyPeakFromRecording(fileInputStream);
+        }
+        catch (IOException e)
+        {
+            buildResponse(resp, "File not found, please record a pattern");
+            return;
+        }
+
+        int foundMatching = 0;
+        try (InputStream is = req.getInputStream())
+        {
+            foundMatching = getFrequencyPeaksFromInput(is, recordingFrequencyPeakHashes);
+        }
+
+        buildResponse(resp, String.valueOf(foundMatching));
+    }
+
+    public static int getFrequencyPeaksFromInput(InputStream is, Map<Integer, List<Integer>> recordingMap) throws IOException
+    {
+        byte[] buffer = new byte[2048];
 
         List<double[]> outputMatrixList = new ArrayList<>();
 
-        InputStream is = null;
-        try
+        List<Double> inputFFTList = new ArrayList<>();
+
+        // ignoring header
+        is.read(new byte[44], 0, 44);
+        int length;
+        while ((length = is.read(buffer, 0, buffer.length)) != -1)
         {
-            is = req.getInputStream();
+            ShortBuffer shortBuffer = ByteBuffer.wrap(buffer, 0, length).order(ByteOrder.LITTLE_ENDIAN).asShortBuffer();
 
-            List<Double> inputFFTList = new ArrayList<>();
+            short[] samplesArray = new short[shortBuffer.limit()];
+            shortBuffer.get(samplesArray);
 
-            for (int length = is.read(buffer); length != -1; length = is.read(buffer))
+            for (short sample : samplesArray)
             {
-                ShortBuffer shortBuffer = ByteBuffer.wrap(buffer, 0, length).order(ByteOrder.LITTLE_ENDIAN).asShortBuffer();
-
-                short[] samplesArray = new short[shortBuffer.limit()];
-                shortBuffer.get(samplesArray);
-
-                for (short sample : samplesArray)
-                {
-                    inputFFTList.add((double) sample);
-                }
-            }
-
-            int rowsAvailable = inputFFTList.size() / CHUNK_SIZE;
-
-            for (int i = 0; i < rowsAvailable; i++)
-            {
-                List<Double> chunkList = inputFFTList.subList(i * CHUNK_SIZE, i * CHUNK_SIZE + CHUNK_SIZE);
-                outputMatrixList.add(ServletUtils.calculateFFT(chunkList));
-            }
-
-            Logger.getAnonymousLogger().severe("number of elements " + outputMatrixList.size() + " row " + outputMatrixList.get(0).length);
-        }
-        finally
-        {
-            if (is != null)
-            {
-                is.close();
+                inputFFTList.add((double) sample);
             }
         }
 
-        buildResponse(resp, outputMatrixList, recorderHashArray);
+        Logger.getAnonymousLogger().severe("input size: " + inputFFTList.size());
+
+        int rowsAvailable = inputFFTList.size() / FREQUENCY_CHUNK_SIZE;
+
+        for (int i = 0; i < rowsAvailable; i++)
+        {
+            List<Double> chunkList = inputFFTList.subList(i * FREQUENCY_CHUNK_SIZE, i * FREQUENCY_CHUNK_SIZE + FREQUENCY_CHUNK_SIZE);
+            outputMatrixList.add(ServletUtils.calculateFFT(chunkList));
+        }
+
+        double[][] outputMatrix = new double[outputMatrixList.size()][outputMatrixList.get(0).length];
+        int i = 0;
+        for (double[] row : outputMatrixList)
+        {
+            outputMatrix[i] = row;
+            i++;
+        }
+
+        return compareFrequencyPeaks(outputMatrix, recordingMap);
     }
 
-    private long[] readRecordings(byte[] buffer) throws IOException
+    public static Map<Integer, List<Integer>> readFrequencyPeakFromRecording(InputStream recordingInputStream) throws IOException
     {
-        ServletContext context = getServletContext();
-        String fullPath = context.getRealPath(RecordingServlet.RECORDING_AUDIO_PATH);
+        byte[] buffer = new byte[2048];
 
         List<Double> recordingAudioFFTList = new ArrayList<>();
         List<double[]> inputMatrixList = new ArrayList<>();
 
-        File recordingFile = new File(fullPath);
-        FileInputStream fileInputStream = new FileInputStream(recordingFile);
         // ignoring header
-        fileInputStream.read(new byte[44]);
-        for (int length = 0; (length = fileInputStream.read(buffer)) > 0; )
+        recordingInputStream.read(new byte[44], 0, 44);
+        int length;
+        while ((length = recordingInputStream.read(buffer, 0, buffer.length)) != -1)
         {
             ShortBuffer shortBuffer = ByteBuffer.wrap(buffer, 0, length).order(ByteOrder.LITTLE_ENDIAN).asShortBuffer();
 
@@ -102,11 +123,11 @@ public class CompareSoundServlet extends HttpServlet
             }
         }
 
-        int rowsAvailable = recordingAudioFFTList.size() / CHUNK_SIZE;
+        int rowsAvailable = recordingAudioFFTList.size() / FREQUENCY_CHUNK_SIZE;
 
         for (int i = 0; i < rowsAvailable; i++)
         {
-            List<Double> chunkList = recordingAudioFFTList.subList(i * CHUNK_SIZE, i * CHUNK_SIZE + CHUNK_SIZE);
+            List<Double> chunkList = recordingAudioFFTList.subList(i * FREQUENCY_CHUNK_SIZE, i * FREQUENCY_CHUNK_SIZE + FREQUENCY_CHUNK_SIZE);
             inputMatrixList.add(ServletUtils.calculateFFT(chunkList));
         }
 
@@ -121,87 +142,73 @@ public class CompareSoundServlet extends HttpServlet
         return findFrequencyPeaks(outputMatrix);
     }
 
-    private void buildResponse(HttpServletResponse resp, List<double[]> outputMatrixList, long[] recorderHashArray) throws IOException
+    private void buildResponse(HttpServletResponse resp, String output) throws IOException
     {
         ServletOutputStream outputStream = resp.getOutputStream();
         ObjectOutputStream objectOutputStream = new ObjectOutputStream(outputStream);
-
-        double[][] outputMatrix = new double[outputMatrixList.size()][outputMatrixList.get(0).length];
-        int i = 0;
-        for (double[] row : outputMatrixList)
-        {
-            outputMatrix[i] = row;
-            i++;
-        }
-
-        long[] hashArray = findFrequencyPeaks(outputMatrix);
-
-        String output = findMatch(hashArray, recorderHashArray);
         objectOutputStream.writeObject(output);
 
         outputStream.flush();
         outputStream.close();
     }
 
-    private String findMatch(long[] hashArray, long[] recorderHashArray)
+    public static String identifyCompatibility(Map<Integer, List<Integer>> inputFrequencyMap, Map<Integer, List<Integer>> recorderFrequencyMap)
     {
         StringBuilder sb = new StringBuilder();
 
-        sb.append("findMatch ").append(hashArray.length).append(" inputHashArray ").append(recorderHashArray.length);
+        sb.append("identifyCompatibility inputFrequencyMap ").append(inputFrequencyMap.keySet().size()).append(" recorderFrequencyMap ").append(recorderFrequencyMap.keySet().size());
         sb.append("\n");
 
-        Logger.getAnonymousLogger().severe("posted hashArray " + Arrays.toString(hashArray));
-        Logger.getAnonymousLogger().severe("recorderHashArray " + Arrays.toString(recorderHashArray));
-
-        Map<Long, List<Integer>> sparseLongArray = new HashMap<>();
-        int index = 0;
-        for (long frequencyPattern : recorderHashArray)
-        {
-            if (frequencyPattern != 0)
-            {
-                List<Integer> listPositionForFrequency = sparseLongArray.get(frequencyPattern);
-                if (listPositionForFrequency == null)
-                {
-                    listPositionForFrequency = new ArrayList<>();
-                }
-                listPositionForFrequency.add(index);
-                sparseLongArray.put(frequencyPattern, listPositionForFrequency);
-            }
-
-            index++;
-        }
-        sb.append("sparseLongArray ").append(sparseLongArray);
-        sb.append("\n");
-
-        List<Integer> positionFound = new ArrayList<>();
-        for (long hash : hashArray)
-        {
-            List<Integer> currentPositions = sparseLongArray.get(hash);
-            if (currentPositions != null)
-            {
-                positionFound.addAll(currentPositions);
-            }
-        }
-
-        int elementsInOrder = 0;
-        int currentPosition = 0;
-        for (Integer position : positionFound)
-        {
-            if (currentPosition < position)
-            {
-                currentPosition = position;
-                elementsInOrder++;
-            }
-        }
-        sb.append("elementsInOrder ").append(elementsInOrder);
-        sb.append("\n");
+//        Map<Long, List<Integer>> sparseLongArray = new HashMap<>();
+//        int index = 0;
+//        for (long frequencyPattern : recorderFrequencyMap.keySet())
+//        {
+//            if (frequencyPattern != 0)
+//            {
+//                List<Integer> listPositionForFrequency = sparseLongArray.get(frequencyPattern);
+//                if (listPositionForFrequency == null)
+//                {
+//                    listPositionForFrequency = new ArrayList<>();
+//                }
+//                listPositionForFrequency.add(index);
+//                sparseLongArray.put(frequencyPattern, listPositionForFrequency);
+//            }
+//
+//            index++;
+//        }
+//        sb.append("sparseLongArray ").append(sparseLongArray);
+//        sb.append("\n");
+//
+//        int lastFound = 0;
+//        List<Integer> positionFound = new ArrayList<>();
+//        for (long hash : hashArray)
+//        {
+//            List<Integer> currentPositions = sparseLongArray.get(hash);
+//            if (currentPositions != null)
+//            {
+//                for (Integer currentPosition : currentPositions)
+//                {
+//                    if (lastFound < currentPosition)
+//                    {
+//                        positionFound.add(currentPosition);
+//                        lastFound = currentPosition;
+//                        break;
+//                    }
+//                }
+//            }
+//        }
+//
+//        sb.append(" positionsFound ").append(positionFound.size()).append(" of ").append(hashArray.length).append(" ---- ").append(positionFound);
+//        sb.append("\n");
 
         return sb.toString();
     }
 
-    private long[] findFrequencyPeaks(double[][] outputMatrix)
+    private static Map<Integer, List<Integer>> findFrequencyPeaks(double[][] outputMatrix)
     {
-        long[] hashArray = new long[outputMatrix[0].length / 4];
+        Logger.getAnonymousLogger().severe("outputMatrix: " + outputMatrix.length);
+
+        Map<Integer, List<Integer>> map = new HashMap<>();
 
         int currentIndex = 0;
         for (double[] instantFrequencies : outputMatrix)
@@ -210,24 +217,71 @@ public class CompareSoundServlet extends HttpServlet
 
             int sectionSize = size / 4;
 
-            int firstMax = findFrequencyWithMaxAmplitude(Arrays.copyOfRange(instantFrequencies, 0, sectionSize), 0);
-            int secondMax = findFrequencyWithMaxAmplitude(Arrays.copyOfRange(instantFrequencies, sectionSize, sectionSize * 2), sectionSize);
-            int thirdMax = findFrequencyWithMaxAmplitude(Arrays.copyOfRange(instantFrequencies, sectionSize * 2, sectionSize * 3), sectionSize * 2);
-            int fourthMax = findFrequencyWithMaxAmplitude(Arrays.copyOfRange(instantFrequencies, sectionSize * 3, size), sectionSize * 3);
+            int firstMax = findFrequencyPositionWithMaxAmplitude(Arrays.copyOfRange(instantFrequencies, 0, sectionSize), 0);
+            int secondMax = findFrequencyPositionWithMaxAmplitude(Arrays.copyOfRange(instantFrequencies, sectionSize, sectionSize * 2), sectionSize);
+            int thirdMax = findFrequencyPositionWithMaxAmplitude(Arrays.copyOfRange(instantFrequencies, sectionSize * 2, sectionSize * 3), sectionSize * 2);
+            int fourthMax = findFrequencyPositionWithMaxAmplitude(Arrays.copyOfRange(instantFrequencies, sectionSize * 3, size), sectionSize * 3);
 
-            long hash = hash(firstMax, secondMax, thirdMax, fourthMax);
-            Logger.getAnonymousLogger().severe("" + hash);
-            hashArray[currentIndex] = hash;
+            addFrequency(map, firstMax, 4 * currentIndex);
+            addFrequency(map, secondMax, 4 * currentIndex + 1);
+            addFrequency(map, thirdMax, 4 * currentIndex + 2);
+            addFrequency(map, fourthMax, 4 * currentIndex + 3);
+
             currentIndex++;
         }
-        return hashArray;
+        return map;
+    }
+
+
+    private static int compareFrequencyPeaks(double[][] outputMatrix, Map<Integer, List<Integer>> recordingMap)
+    {
+        int consecutivesFound = 0;
+
+        List<Integer> previousFreqBin = new ArrayList<>();
+        for (double[] instantFrequencies : outputMatrix)
+        {
+            int firstMax = findFrequencyPositionWithMaxAmplitude(instantFrequencies, 0);
+
+            List<Integer> freqBin = recordingMap.get(firstMax);
+            if (freqBin != null && !previousFreqBin.isEmpty())
+            {
+
+                for (Integer freqElement : freqBin)
+                {
+                    for (Integer previousFreqElement : previousFreqBin)
+                    {
+                        if (freqElement == previousFreqElement + 1)
+                        {
+                            consecutivesFound++;
+                            break;
+                        }
+                    }
+                }
+            }
+            if (freqBin != null)
+            {
+                previousFreqBin = freqBin;
+            }
+        }
+        return consecutivesFound;
+    }
+
+    private static void addFrequency(Map<Integer, List<Integer>> map, int frequency, int position)
+    {
+        List<Integer> listPositionForFrequency = map.get(frequency);
+        if (listPositionForFrequency == null)
+        {
+            listPositionForFrequency = new ArrayList<>();
+        }
+        listPositionForFrequency.add(position);
+        map.put(frequency, listPositionForFrequency);
     }
 
 
     //Using a little bit of error-correction, damping
     private static final int FUZ_FACTOR = 2;
 
-    private long hash(int firstMax, int secondMax, int thirdMax, int fourthMax)
+    private static long hash(int firstMax, int secondMax, int thirdMax, int fourthMax)
     {
         long p1 = firstMax;
         long p2 = secondMax;
@@ -236,16 +290,18 @@ public class CompareSoundServlet extends HttpServlet
         return (p4 - (p4 % FUZ_FACTOR)) * 100000000 + (p3 - (p3 % FUZ_FACTOR)) * 100000 + (p2 - (p2 % FUZ_FACTOR)) * 100 + (p1 - (p1 % FUZ_FACTOR));
     }
 
-    private int findFrequencyWithMaxAmplitude(double[] array, int baseIndex)
+    public static int findFrequencyPositionWithMaxAmplitude(double[] array, int baseIndex)
     {
-        int max = 0;
+        double max = 0;
+        int maxFreq = 0;
         for (int counter = 1; counter < array.length; counter++)
         {
             if (array[counter] > max)
             {
-                max = baseIndex + counter;
+                max = array[counter];
+                maxFreq = baseIndex + counter;
             }
         }
-        return max;
+        return maxFreq;
     }
 }
