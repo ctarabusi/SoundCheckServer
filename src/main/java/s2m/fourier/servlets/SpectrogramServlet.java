@@ -18,24 +18,24 @@ import java.util.List;
 
 public class SpectrogramServlet extends HttpServlet
 {
-    private static int CHUNK_SIZE = 4096;
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException
     {
-        List<double[]> outputMatrixList = new ArrayList<>();
+        int CHUNK_SIZE = 2048;
 
-        InputStream in = null;
+        List<double[]> outputMatrixList = new ArrayList<>();
 
         byte[] buffer = new byte[CHUNK_SIZE];
 
+        InputStream is = null;
         try
         {
-            in = req.getInputStream();
-
             List<Double> inputFFTList = new ArrayList<Double>();
 
-            for (int length = 0; (length = in.read(buffer)) > 0; )
+            is = req.getInputStream();
+
+            for (int length = is.read(buffer); length != -1; length = is.read(buffer))
             {
                 ShortBuffer shortBuffer = ByteBuffer.wrap(buffer, 0, length).order(ByteOrder.LITTLE_ENDIAN).asShortBuffer();
 
@@ -58,9 +58,9 @@ public class SpectrogramServlet extends HttpServlet
         }
         finally
         {
-            if (in != null)
+            if (is != null)
             {
-                in.close();
+                is.close();
             }
         }
 

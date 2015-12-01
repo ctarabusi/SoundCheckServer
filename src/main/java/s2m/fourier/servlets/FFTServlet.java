@@ -1,7 +1,5 @@
 package s2m.fourier.servlets;
 
-import org.apache.commons.math.complex.Complex;
-import org.apache.commons.math.transform.FastFourierTransformer;
 import s2m.fourier.utils.ServletUtils;
 
 import javax.servlet.ServletException;
@@ -16,7 +14,6 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.ShortBuffer;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class FFTServlet extends HttpServlet
@@ -25,16 +22,16 @@ public class FFTServlet extends HttpServlet
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException
     {
-        BufferedInputStream in = null;
+        BufferedInputStream is = null;
 
-        byte[] buffer = new byte[10240];
+        byte[] buffer = new byte[2048];
 
         List<Double> inputFFTList = new ArrayList<>();
         try
         {
-            in = new BufferedInputStream(req.getInputStream());
+            is = new BufferedInputStream(req.getInputStream());
 
-            for (int length = 0; (length = in.read(buffer, 0, buffer.length)) > 0; )
+            for (int length = is.read(buffer); length != -1; length = is.read(buffer))
             {
                 ShortBuffer shortBuffer = ByteBuffer.wrap(buffer, 0, length).order(ByteOrder.LITTLE_ENDIAN).asShortBuffer();
 
@@ -51,23 +48,16 @@ public class FFTServlet extends HttpServlet
         }
         finally
         {
-            if (in != null)
+            if (is != null)
             {
-                in.close();
+                is.close();
             }
         }
-
-
-        double[] inputArray = ServletUtils.doubleArrayToPrimitve(inputFFTList);
-        double[] inputWithoutMeanFFT = ServletUtils.removeAverage(inputArray);
-        double[] inputFFT = ServletUtils.addZeroPaddingToPowerTwo(inputWithoutMeanFFT);
-        Complex[] outputFFT = new FastFourierTransformer().transform(inputFFT);
 
         ServletOutputStream outputStream = resp.getOutputStream();
         ObjectOutputStream objectOutputStream = new ObjectOutputStream(outputStream);
 
-        Complex[] complexArray = Arrays.copyOfRange(outputFFT, 0, outputFFT.length / 2);
-        double[] magnitudeArray = ServletUtils.getMagnitudeComponents(complexArray);
+        double[] magnitudeArray = ServletUtils.calculateFFT(inputFFTList);
         objectOutputStream.writeObject(magnitudeArray);
 
         outputStream.flush();

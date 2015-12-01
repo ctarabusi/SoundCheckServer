@@ -25,10 +25,10 @@ public class RecordingServlet extends HttpServlet
 
         try
         {
-            byte[] buf = new byte[4096];
-            for (int nChunk = is.read(buf); nChunk != -1; nChunk = is.read(buf))
+            byte[] buffer = new byte[2048];
+            for (int length = is.read(buffer); length != -1; length = is.read(buffer))
             {
-                fileOutputStream.write(buf, 0, nChunk);
+                fileOutputStream.write(buffer, 0, length);
             }
         }
         finally
@@ -38,5 +38,4 @@ public class RecordingServlet extends HttpServlet
             fileOutputStream.close();
         }
     }
-
 }

@@ -25,7 +25,7 @@ import java.util.logging.Logger;
 
 public class CompareSoundServlet extends HttpServlet
 {
-    private static int CHUNK_SIZE = 4096;
+    private static int CHUNK_SIZE = 2048;
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException
@@ -34,20 +34,16 @@ public class CompareSoundServlet extends HttpServlet
 
         long[] recorderHashArray = readRecordings(buffer);
 
-        int rowsAvailable;
-        int i;
-
         List<double[]> outputMatrixList = new ArrayList<>();
 
-        InputStream in = null;
-
+        InputStream is = null;
         try
         {
-            in = req.getInputStream();
+            is = req.getInputStream();
 
             List<Double> inputFFTList = new ArrayList<>();
 
-            for (int length = 0; (length = in.read(buffer)) > 0; )
+            for (int length = is.read(buffer); length != -1; length = is.read(buffer))
             {
                 ShortBuffer shortBuffer = ByteBuffer.wrap(buffer, 0, length).order(ByteOrder.LITTLE_ENDIAN).asShortBuffer();
 
@@ -60,9 +56,9 @@ public class CompareSoundServlet extends HttpServlet
                 }
             }
 
-            rowsAvailable = inputFFTList.size() / CHUNK_SIZE;
+            int rowsAvailable = inputFFTList.size() / CHUNK_SIZE;
 
-            for (i = 0; i < rowsAvailable; i++)
+            for (int i = 0; i < rowsAvailable; i++)
             {
                 List<Double> chunkList = inputFFTList.subList(i * CHUNK_SIZE, i * CHUNK_SIZE + CHUNK_SIZE);
                 outputMatrixList.add(ServletUtils.calculateFFT(chunkList));
@@ -72,9 +68,9 @@ public class CompareSoundServlet extends HttpServlet
         }
         finally
         {
-            if (in != null)
+            if (is != null)
             {
-                in.close();
+                is.close();
             }
         }
 
