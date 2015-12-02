@@ -22,15 +22,11 @@ public class FFTServlet extends HttpServlet
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException
     {
-        BufferedInputStream is = null;
-
         byte[] buffer = new byte[2048];
 
         List<Double> inputFFTList = new ArrayList<>();
-        try
+        try (BufferedInputStream is = new BufferedInputStream(req.getInputStream()))
         {
-            is = new BufferedInputStream(req.getInputStream());
-
             for (int length = is.read(buffer); length != -1; length = is.read(buffer))
             {
                 ShortBuffer shortBuffer = ByteBuffer.wrap(buffer, 0, length).order(ByteOrder.LITTLE_ENDIAN).asShortBuffer();
@@ -46,22 +42,16 @@ public class FFTServlet extends HttpServlet
                 }
             }
         }
-        finally
+
+        try (ServletOutputStream outputStream = resp.getOutputStream())
         {
-            if (is != null)
-            {
-                is.close();
-            }
+            ObjectOutputStream objectOutputStream = new ObjectOutputStream(outputStream);
+
+            double[] magnitudeArray = ServletUtils.calculateFFT(inputFFTList);
+            objectOutputStream.writeObject(magnitudeArray);
+
+            outputStream.flush();
         }
-
-        ServletOutputStream outputStream = resp.getOutputStream();
-        ObjectOutputStream objectOutputStream = new ObjectOutputStream(outputStream);
-
-        double[] magnitudeArray = ServletUtils.calculateFFT(inputFFTList);
-        objectOutputStream.writeObject(magnitudeArray);
-
-        outputStream.flush();
-        outputStream.close();
     }
 
     public static float hammingWindow(int length, int index)

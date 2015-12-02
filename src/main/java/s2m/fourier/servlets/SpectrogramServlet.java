@@ -28,12 +28,9 @@ public class SpectrogramServlet extends HttpServlet
 
         byte[] buffer = new byte[CHUNK_SIZE];
 
-        InputStream is = null;
-        try
+        try (InputStream is = req.getInputStream())
         {
             List<Double> inputFFTList = new ArrayList<Double>();
-
-            is = req.getInputStream();
 
             for (int length = is.read(buffer); length != -1; length = is.read(buffer))
             {
@@ -56,33 +53,27 @@ public class SpectrogramServlet extends HttpServlet
                 outputMatrixList.add(ServletUtils.calculateFFT(chunkList));
             }
         }
-        finally
-        {
-            if (is != null)
-            {
-                is.close();
-            }
-        }
 
         buildResponse(resp, outputMatrixList);
     }
 
     private void buildResponse(HttpServletResponse resp, List<double[]> outputMatrixList) throws IOException
     {
-        ServletOutputStream outputStream = resp.getOutputStream();
-        ObjectOutputStream objectOutputStream = new ObjectOutputStream(outputStream);
-
-        double[][] outputMatrix = new double[outputMatrixList.size()][outputMatrixList.get(0).length];
-        int i = 0;
-        for (double[] row : outputMatrixList)
+        try (ServletOutputStream outputStream = resp.getOutputStream())
         {
-            outputMatrix[i] = row;
-            i++;
+            ObjectOutputStream objectOutputStream = new ObjectOutputStream(outputStream);
+
+            double[][] outputMatrix = new double[outputMatrixList.size()][outputMatrixList.get(0).length];
+            int i = 0;
+            for (double[] row : outputMatrixList)
+            {
+                outputMatrix[i] = row;
+                i++;
+            }
+
+            objectOutputStream.writeObject(outputMatrix);
+
+            outputStream.flush();
         }
-
-        objectOutputStream.writeObject(outputMatrix);
-
-        outputStream.flush();
-        outputStream.close();
     }
 }

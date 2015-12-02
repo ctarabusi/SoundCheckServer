@@ -146,64 +146,12 @@ public class CompareSoundServlet extends HttpServlet
 
     private void buildResponse(HttpServletResponse resp, String output) throws IOException
     {
-        ServletOutputStream outputStream = resp.getOutputStream();
-        ObjectOutputStream objectOutputStream = new ObjectOutputStream(outputStream);
-        objectOutputStream.writeObject(output);
-
-        outputStream.flush();
-        outputStream.close();
-    }
-
-    public static String identifyCompatibility(Map<Integer, List<Integer>> inputFrequencyMap, Map<Integer, List<Integer>> recorderFrequencyMap)
-    {
-        StringBuilder sb = new StringBuilder();
-
-        sb.append("identifyCompatibility inputFrequencyMap ").append(inputFrequencyMap.keySet().size()).append(" recorderFrequencyMap ").append(recorderFrequencyMap.keySet().size());
-        sb.append("\n");
-
-//        Map<Long, List<Integer>> sparseLongArray = new HashMap<>();
-//        int index = 0;
-//        for (long frequencyPattern : recorderFrequencyMap.keySet())
-//        {
-//            if (frequencyPattern != 0)
-//            {
-//                List<Integer> listPositionForFrequency = sparseLongArray.get(frequencyPattern);
-//                if (listPositionForFrequency == null)
-//                {
-//                    listPositionForFrequency = new ArrayList<>();
-//                }
-//                listPositionForFrequency.add(index);
-//                sparseLongArray.put(frequencyPattern, listPositionForFrequency);
-//            }
-//
-//            index++;
-//        }
-//        sb.append("sparseLongArray ").append(sparseLongArray);
-//        sb.append("\n");
-//
-//        int lastFound = 0;
-//        List<Integer> positionFound = new ArrayList<>();
-//        for (long hash : hashArray)
-//        {
-//            List<Integer> currentPositions = sparseLongArray.get(hash);
-//            if (currentPositions != null)
-//            {
-//                for (Integer currentPosition : currentPositions)
-//                {
-//                    if (lastFound < currentPosition)
-//                    {
-//                        positionFound.add(currentPosition);
-//                        lastFound = currentPosition;
-//                        break;
-//                    }
-//                }
-//            }
-//        }
-//
-//        sb.append(" positionsFound ").append(positionFound.size()).append(" of ").append(hashArray.length).append(" ---- ").append(positionFound);
-//        sb.append("\n");
-
-        return sb.toString();
+        try (ServletOutputStream outputStream = resp.getOutputStream())
+        {
+            ObjectOutputStream objectOutputStream = new ObjectOutputStream(outputStream);
+            objectOutputStream.writeObject(output);
+            outputStream.flush();
+        }
     }
 
     private static Map<Integer, List<Integer>> findFrequencyPeaks(double[][] outputMatrix)

@@ -20,10 +20,9 @@ public class RecordingServlet extends HttpServlet
         ServletContext context = getServletContext();
         String fullPath = context.getRealPath(RECORDING_AUDIO_PATH);
 
-        InputStream is = req.getInputStream();
         FileOutputStream fileOutputStream = new FileOutputStream(new File(fullPath));
 
-        try
+        try (InputStream is = req.getInputStream())
         {
             byte[] buffer = new byte[2048];
             for (int length = is.read(buffer); length != -1; length = is.read(buffer))
@@ -33,7 +32,6 @@ public class RecordingServlet extends HttpServlet
         }
         finally
         {
-            is.close();
             fileOutputStream.flush();
             fileOutputStream.close();
         }
