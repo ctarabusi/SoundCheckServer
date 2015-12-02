@@ -1,5 +1,6 @@
 package s2m.fourier.servlets;
 
+import com.google.common.collect.Lists;
 import s2m.fourier.utils.ServletUtils;
 
 import javax.servlet.ServletException;
@@ -45,13 +46,8 @@ public class SpectrogramServlet extends HttpServlet
                 }
             }
 
-            int rowsAvailable = inputFFTList.size() / CHUNK_SIZE;
-
-            for (int i = 0; i < rowsAvailable; i++)
-            {
-                List<Double> chunkList = inputFFTList.subList(i * CHUNK_SIZE, i * CHUNK_SIZE + CHUNK_SIZE);
-                outputMatrixList.add(ServletUtils.calculateFFT(chunkList));
-            }
+            // Calculating the FFT for every sample
+            Lists.partition(inputFFTList, CHUNK_SIZE).stream().map(ServletUtils::calculateFFT).forEach(outputMatrixList::add);
         }
 
         buildResponse(resp, outputMatrixList);
@@ -72,7 +68,6 @@ public class SpectrogramServlet extends HttpServlet
             }
 
             objectOutputStream.writeObject(outputMatrix);
-
             outputStream.flush();
         }
     }

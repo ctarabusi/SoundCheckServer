@@ -17,11 +17,11 @@ public class CompareSoundTest
     @Test
     public void testFindMax() throws IOException
     {
-        int maximumPosition = CompareSoundServlet.findFrequencyPositionWithMaxAmplitude(new double[]{7.5, -4.0, 33.0}, 0);
+        int maximumPosition = CompareSoundServlet.findFrequencyPositionWithMaxAmplitude(new double[]{7.5, -4.0, 33.0});
         assertThat(maximumPosition, is(2));
 
-        maximumPosition = CompareSoundServlet.findFrequencyPositionWithMaxAmplitude(new double[]{-120.0, 45.0, 7.5, -4.0, 33.0}, 1000);
-        assertThat(maximumPosition, is(1001));
+        maximumPosition = CompareSoundServlet.findFrequencyPositionWithMaxAmplitude(new double[]{-120.0, 45.0, 7.5, -4.0, 33.0});
+        assertThat(maximumPosition, is(1));
     }
     @Test
     public void compareSound() throws IOException
@@ -32,7 +32,7 @@ public class CompareSoundTest
         recordingInputStream.close();
 
         FileInputStream fileInputStream = new FileInputStream(new File("src/test/java/s2m/fourier/piano.wav"));
-        int inputFrequencyPeaksHashes = CompareSoundServlet.getFrequencyPeaksFromInput(fileInputStream, recordingFrequencyPeakHashes);
+        String inputFrequencyPeaksHashes = CompareSoundServlet.getFrequencyPeaksFromInput(fileInputStream, recordingFrequencyPeakHashes);
         fileInputStream.close();
 
         System.out.println(inputFrequencyPeaksHashes);
