@@ -143,17 +143,17 @@ public class CompareSoundServlet extends HttpServlet
 
     private static Map<Integer, List<Integer>> findFrequencyPeaks(double[][] outputMatrix)
     {
-        Map<Integer, List<Integer>> map = new HashMap<>();
+        Map<Integer, List<Integer>> mapFrequencyToPositions = new HashMap<>();
 
         int currentIndex = 0;
         for (double[] instantFrequencies : outputMatrix)
         {
             int firstMax = findFrequencyPositionWithMaxAmplitude(instantFrequencies);
-            addFrequency(map, firstMax, currentIndex);
+            addFrequency(mapFrequencyToPositions, firstMax, currentIndex);
 
             currentIndex++;
         }
-        return map;
+        return mapFrequencyToPositions;
     }
 
 
@@ -190,11 +190,11 @@ public class CompareSoundServlet extends HttpServlet
         return matchesFound + " of " + inputSpectrogramMatrix.length + " (" + percentMatch + "%)";
     }
 
-    private static void addFrequency(Map<Integer, List<Integer>> map, int frequency, int position)
+    private static void addFrequency(Map<Integer, List<Integer>> mapFrequencyToPositions, int frequency, int position)
     {
-        List<Integer> listPositionForFrequency = map.getOrDefault(frequency, new ArrayList<>());
+        List<Integer> listPositionForFrequency = mapFrequencyToPositions.getOrDefault(frequency, new ArrayList<>());
         listPositionForFrequency.add(position);
-        map.put(frequency, listPositionForFrequency);
+        mapFrequencyToPositions.put(frequency, listPositionForFrequency);
     }
 
     public static int findFrequencyPositionWithMaxAmplitude(double[] array)
