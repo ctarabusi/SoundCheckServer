@@ -16,6 +16,7 @@ import java.nio.ByteOrder;
 import java.nio.ShortBuffer;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class SpectrogramServlet extends HttpServlet
 {
@@ -25,7 +26,7 @@ public class SpectrogramServlet extends HttpServlet
     {
         int CHUNK_SIZE = 2048;
 
-        List<double[]> outputMatrixList = new ArrayList<>();
+        List<double[]> outputMatrixList;
 
         byte[] buffer = new byte[CHUNK_SIZE];
 
@@ -47,7 +48,7 @@ public class SpectrogramServlet extends HttpServlet
             }
 
             // Calculating the FFT for every sample
-            Lists.partition(inputFFTList, CHUNK_SIZE).stream().map(ServletUtils::calculateFFT).forEach(outputMatrixList::add);
+            outputMatrixList = Lists.partition(inputFFTList, CHUNK_SIZE).stream().map(ServletUtils::calculateFFT).collect(Collectors.toList());
         }
 
         buildResponse(resp, outputMatrixList);

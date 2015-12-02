@@ -23,6 +23,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 public class CompareSoundServlet extends HttpServlet
 {
@@ -81,8 +82,7 @@ public class CompareSoundServlet extends HttpServlet
         }
 
         // Calculating the FFT for every sample
-        List<double[]> inputSpectrogramList = new ArrayList<>();
-        Lists.partition(inputFFTList, FREQUENCY_CHUNK_SIZE).stream().map(ServletUtils::calculateFFT).forEach(inputSpectrogramList::add);
+        List<double[]> inputSpectrogramList = Lists.partition(inputFFTList, FREQUENCY_CHUNK_SIZE).stream().map(ServletUtils::calculateFFT).collect(Collectors.toList());
 
         double[][] inputSpectrogramMatrix = new double[inputSpectrogramList.size()][inputSpectrogramList.get(0).length];
         int i = 0;
@@ -118,8 +118,7 @@ public class CompareSoundServlet extends HttpServlet
         }
 
         // Calculating the FFT for every sample
-        List<double[]> inputMatrixList = new ArrayList<>();
-        Lists.partition(recordingAudioFFTList, FREQUENCY_CHUNK_SIZE).stream().map(ServletUtils::calculateFFT).forEach(inputMatrixList::add);
+        List<double[]> inputMatrixList = Lists.partition(recordingAudioFFTList, FREQUENCY_CHUNK_SIZE).stream().map(ServletUtils::calculateFFT).collect(Collectors.toList());
 
         double[][] outputMatrix = new double[inputMatrixList.size()][inputMatrixList.get(0).length];
         int i = 0;
