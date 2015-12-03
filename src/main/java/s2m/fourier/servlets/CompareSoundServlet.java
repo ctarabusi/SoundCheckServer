@@ -150,9 +150,9 @@ public class CompareSoundServlet extends HttpServlet
         List<Integer> previousFreqBin = new ArrayList<>();
         for (double[] instantFrequencies : inputSpectrogramMatrix)
         {
-            int firstMax = findFrequencyPositionWithMaxAmplitude(instantFrequencies);
+            int maxAmplitudeFrequency = findFrequencyPositionWithMaxAmplitude(instantFrequencies);
 
-            List<Integer> freqBin = recordingMap.getOrDefault(firstMax, new ArrayList<>());
+            List<Integer> freqBin = recordingMap.getOrDefault(maxAmplitudeFrequency, new ArrayList<>());
             if (!previousFreqBin.isEmpty())
             {
                 for (Integer freqElement : freqBin)
@@ -167,14 +167,9 @@ public class CompareSoundServlet extends HttpServlet
                     }
                 }
             }
-            if (freqBin != null)
-            {
-                previousFreqBin = freqBin;
-            }
+            previousFreqBin = freqBin;
         }
-        double percentMatch = Math.ceil(((double) matchesFound / inputSpectrogramMatrix.length) * 100);
-
-        return matchesFound + " of " + inputSpectrogramMatrix.length + " (" + percentMatch + "%)";
+        return "Number of matches found: " + matchesFound;
     }
 
     private static void addFrequency(Map<Integer, List<Integer>> mapFrequencyToPositions, int frequency, int position)
