@@ -1,7 +1,6 @@
 package s2m.fourier.utils;
 
 import com.google.common.primitives.Doubles;
-import com.google.common.primitives.Ints;
 import org.apache.commons.math.complex.Complex;
 import org.apache.commons.math.transform.FastFourierTransformer;
 
@@ -10,6 +9,7 @@ import java.util.List;
 
 public class FFTUtils
 {
+
     static double[] addZeroPaddingToPowerTwo(double[] inputArray)
     {
         int currentSize = inputArray.length;
@@ -56,5 +56,11 @@ public class FFTUtils
 
         // Retrieve just half of elements being simmetrical & Getting Magnitude of elements
         return Arrays.stream(outputFFT).limit(outputFFT.length / 2).mapToDouble(Complex::abs).toArray();
+    }
+
+    public static int findFrequencyPositionWithMaxAmplitude(double[] array)
+    {
+        double max = Doubles.max(array);
+        return Doubles.indexOf(array, max);
     }
 }

@@ -11,13 +11,13 @@ import static org.hamcrest.core.Is.is;
 public class MatrixHelperTest
 {
     @Test
-    public void testGetMatrixFromList()
+    public void testConvertListToMatrix()
     {
         List<double[]> inputList = new ArrayList<>();
         inputList.add(new double[]{1.0, 2.0, 3.0});
         inputList.add(new double[]{4.0, 5.0, 6.0});
 
-        double[][] outputArray = MatrixHelper.getMatrixFromList(inputList);
+        double[][] outputArray = ServletUtils.convertListToMatrix(inputList);
 
         assertThat(outputArray[0][0], is(1.0));
         assertThat(outputArray[0][1], is(2.0));
