@@ -22,6 +22,7 @@ public class RecordingServlet extends HttpServlet
 
         FileOutputStream fileOutputStream = new FileOutputStream(new File(fullPath));
 
+        // Read Input Sample Stream and write a Recording.wav file
         try (InputStream is = req.getInputStream())
         {
             byte[] buffer = new byte[2048];

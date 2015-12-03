@@ -1,6 +1,7 @@
 package s2m.fourier.servlets;
 
-import s2m.fourier.utils.ServletUtils;
+import s2m.fourier.utils.FFTUtils;
+import s2m.fourier.utils.MatrixHelper;
 
 import javax.servlet.ServletException;
 import javax.servlet.ServletOutputStream;
@@ -15,6 +16,7 @@ import java.nio.ByteOrder;
 import java.nio.ShortBuffer;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 
 public class FFTServlet extends HttpServlet
 {
@@ -24,43 +26,34 @@ public class FFTServlet extends HttpServlet
     {
         byte[] buffer = new byte[2048];
 
+        // Read Input Sample Stream
         List<Double> inputFFTList = new ArrayList<>();
         try (BufferedInputStream is = new BufferedInputStream(req.getInputStream()))
         {
             for (int length = is.read(buffer); length != -1; length = is.read(buffer))
             {
                 ShortBuffer shortBuffer = ByteBuffer.wrap(buffer, 0, length).order(ByteOrder.LITTLE_ENDIAN).asShortBuffer();
-
-                short[] samplesArray = new short[shortBuffer.limit()];
-                shortBuffer.get(samplesArray);
-
-                int index = 0;
-                for (short sample : samplesArray)
-                {
-                    inputFFTList.add((double) (hammingWindow(samplesArray.length, index) * sample));
-                    index++;
-                }
+                MatrixHelper.addShortBufferToListWithHamming(shortBuffer, inputFFTList);
             }
         }
 
+        // Calculate FFT
+        double[] magnitudeArray = FFTUtils.calculateFFT(inputFFTList);
+
+        buildResponse(resp, magnitudeArray);
+    }
+
+    private void buildResponse(HttpServletResponse resp, double[] magnitudeArray)
+    {
         try (ServletOutputStream outputStream = resp.getOutputStream())
         {
             ObjectOutputStream objectOutputStream = new ObjectOutputStream(outputStream);
-
-            double[] magnitudeArray = ServletUtils.calculateFFT(inputFFTList);
             objectOutputStream.writeObject(magnitudeArray);
-
             outputStream.flush();
         }
-    }
-
-    public static float hammingWindow(int length, int index)
-    {
-        if (index > length)
+        catch (IOException e)
         {
-            return 0;
+            Logger.getAnonymousLogger().severe(e.getMessage());
         }
-        return 0.54f - 0.46f * (float) Math.cos(Math.PI * 2 * index / (length - 1));
     }
-
 }

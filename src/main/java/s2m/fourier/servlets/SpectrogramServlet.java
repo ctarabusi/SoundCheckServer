@@ -1,7 +1,8 @@
 package s2m.fourier.servlets;
 
 import com.google.common.collect.Lists;
-import s2m.fourier.utils.ServletUtils;
+import s2m.fourier.utils.FFTUtils;
+import s2m.fourier.utils.MatrixHelper;
 
 import javax.servlet.ServletException;
 import javax.servlet.ServletOutputStream;
@@ -16,6 +17,7 @@ import java.nio.ByteOrder;
 import java.nio.ShortBuffer;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 public class SpectrogramServlet extends HttpServlet
@@ -26,50 +28,36 @@ public class SpectrogramServlet extends HttpServlet
     {
         int CHUNK_SIZE = 2048;
 
-        List<double[]> outputMatrixList;
-
-        byte[] buffer = new byte[CHUNK_SIZE];
+        List<Double> inputFFTList = new ArrayList<Double>();
 
         try (InputStream is = req.getInputStream())
         {
-            List<Double> inputFFTList = new ArrayList<Double>();
-
+            byte[] buffer = new byte[CHUNK_SIZE];
             for (int length = is.read(buffer); length != -1; length = is.read(buffer))
             {
                 ShortBuffer shortBuffer = ByteBuffer.wrap(buffer, 0, length).order(ByteOrder.LITTLE_ENDIAN).asShortBuffer();
-
-                short[] samplesArray = new short[shortBuffer.limit()];
-                shortBuffer.get(samplesArray);
-
-                for (short sample : samplesArray)
-                {
-                    inputFFTList.add((double) sample);
-                }
+                MatrixHelper.addShortBufferToList(shortBuffer, inputFFTList);
             }
-
-            // Calculating the FFT for every sample
-            outputMatrixList = Lists.partition(inputFFTList, CHUNK_SIZE).stream().map(ServletUtils::calculateFFT).collect(Collectors.toList());
         }
+
+        // Calculating the FFT for every sample
+        List<double[]> outputMatrixList = Lists.partition(inputFFTList, CHUNK_SIZE).stream().map(FFTUtils::calculateFFT).collect(Collectors.toList());
 
         buildResponse(resp, outputMatrixList);
     }
 
-    private void buildResponse(HttpServletResponse resp, List<double[]> outputMatrixList) throws IOException
+    private void buildResponse(HttpServletResponse resp, List<double[]> outputMatrixList)
     {
         try (ServletOutputStream outputStream = resp.getOutputStream())
         {
             ObjectOutputStream objectOutputStream = new ObjectOutputStream(outputStream);
 
-            double[][] outputMatrix = new double[outputMatrixList.size()][outputMatrixList.get(0).length];
-            int i = 0;
-            for (double[] row : outputMatrixList)
-            {
-                outputMatrix[i] = row;
-                i++;
-            }
-
-            objectOutputStream.writeObject(outputMatrix);
+            objectOutputStream.writeObject(MatrixHelper.getMatrixFromList(outputMatrixList));
             outputStream.flush();
+        }
+        catch (IOException e)
+        {
+            Logger.getAnonymousLogger().severe(e.getMessage());
         }
     }
 }

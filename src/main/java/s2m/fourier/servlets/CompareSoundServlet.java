@@ -2,7 +2,8 @@ package s2m.fourier.servlets;
 
 import com.google.common.collect.Lists;
 import com.google.common.primitives.Doubles;
-import s2m.fourier.utils.ServletUtils;
+import s2m.fourier.utils.FFTUtils;
+import s2m.fourier.utils.MatrixHelper;
 
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
@@ -82,15 +83,9 @@ public class CompareSoundServlet extends HttpServlet
         }
 
         // Calculating the FFT for every sample
-        List<double[]> inputSpectrogramList = Lists.partition(inputFFTList, FREQUENCY_CHUNK_SIZE).stream().map(ServletUtils::calculateFFT).collect(Collectors.toList());
+        final List<double[]> inputSpectrogramList = Lists.partition(inputFFTList, FREQUENCY_CHUNK_SIZE).stream().map(FFTUtils::calculateFFT).collect(Collectors.toList());
 
-        double[][] inputSpectrogramMatrix = new double[inputSpectrogramList.size()][inputSpectrogramList.get(0).length];
-        int i = 0;
-        for (double[] row : inputSpectrogramList)
-        {
-            inputSpectrogramMatrix[i] = row;
-            i++;
-        }
+        double[][] inputSpectrogramMatrix = MatrixHelper.getMatrixFromList(inputSpectrogramList);
 
         return compareFrequencyPeaks(inputSpectrogramMatrix, recordingMap);
     }
@@ -118,17 +113,9 @@ public class CompareSoundServlet extends HttpServlet
         }
 
         // Calculating the FFT for every sample
-        List<double[]> inputMatrixList = Lists.partition(recordingAudioFFTList, FREQUENCY_CHUNK_SIZE).stream().map(ServletUtils::calculateFFT).collect(Collectors.toList());
+        final List<double[]> inputMatrixList = Lists.partition(recordingAudioFFTList, FREQUENCY_CHUNK_SIZE).stream().map(FFTUtils::calculateFFT).collect(Collectors.toList());
 
-        double[][] outputMatrix = new double[inputMatrixList.size()][inputMatrixList.get(0).length];
-        int i = 0;
-        for (double[] row : inputMatrixList)
-        {
-            outputMatrix[i] = row;
-            i++;
-        }
-
-        return findFrequencyPeaks(outputMatrix);
+        return findFrequencyPeaks(MatrixHelper.getMatrixFromList(inputMatrixList));
     }
 
     private void buildResponse(HttpServletResponse resp, String output) throws IOException
@@ -155,7 +142,6 @@ public class CompareSoundServlet extends HttpServlet
         }
         return mapFrequencyToPositions;
     }
-
 
     private static String compareFrequencyPeaks(double[][] inputSpectrogramMatrix, Map<Integer, List<Integer>> recordingMap)
     {
@@ -187,6 +173,7 @@ public class CompareSoundServlet extends HttpServlet
             }
         }
         double percentMatch = Math.ceil(((double) matchesFound / inputSpectrogramMatrix.length) * 100);
+
         return matchesFound + " of " + inputSpectrogramMatrix.length + " (" + percentMatch + "%)";
     }
 
